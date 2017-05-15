@@ -12,7 +12,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Cache;
+import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
@@ -22,9 +24,12 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,15 +37,16 @@ public class MainActivity extends AppCompatActivity {
     private static final String STRING_REQUEST_URL = "https://androidtutorialpoint.com/api/volleyString";
     private static final String JSON_OBJECT_REQUEST_URL = "http://androidtutorialpoint.com/api/volleyJsonObject";
     private static final String JSON_ARRAY_REQUEST_URL = "http://androidtutorialpoint.com/api/volleyJsonArray";
-
+    private static final String URL = "https://api-gw.revup.reverieinc.com/apiman-gateway/highway_delite/transliteration/1.0?source_lang=english&target_lang=hindi&content_lang=&abbreviate=&noOfsuggestions=1&domain=1";
 
 
     ProgressDialog progressDialog;
     private static final String TAG = "MainActivity";
-    private Button stringRequestButton, JsonObjectRequestButton, JsonArrayRequestButton, ImageRequestButton;
+    private Button stringRequestButton, JsonObjectRequestButton, JsonArrayRequestButton, ImageRequestButton, TranslateButton;
     private View showDialogView;
     private TextView outputTextView;
     private ImageView outputImageView;
+    private String sourceLang, targetLang;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
         JsonObjectRequestButton = (Button)findViewById(R.id.button_get_Json_object);
         JsonArrayRequestButton = (Button)findViewById(R.id.button_get_Json_array);
         ImageRequestButton = (Button)findViewById(R.id.button_get_image);
+        TranslateButton = (Button)findViewById(R.id.button_translate);
+
 
         stringRequestButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,17 +76,88 @@ public class MainActivity extends AppCompatActivity {
         JsonArrayRequestButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               // volleyJsonArrayRequest(JSON_ARRAY_REQUEST_URL);
+                volleyJsonArrayRequest(JSON_ARRAY_REQUEST_URL);
             }
         });
         ImageRequestButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               // volleyImageLoader(IMAGE_REQUEST_URL);
+                volleyImageLoader(IMAGE_REQUEST_URL);
+            }
+        });
+
+        TranslateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                volleyTranslateString();
             }
         });
 
     }
+
+    public void volleyTranslateString() {
+        String REQUEST_TAG = "tag";
+        sourceLang = "hindi";
+        targetLang = "english";
+        String URL = "https://api-gw.revup.reverieinc.com/apiman-gateway/highway_delite/transliteration/1.0?source_lang="+sourceLang+"&target_lang="+targetLang+"&domain=1";
+
+        final String jsonString = "{ \"data\": [ \"टेस्ट\",          \"स्वागत है आपका!\"] }";
+        try {
+            JSONObject jsonobj = new JSONObject(jsonString);
+            JsonObjectRequest jsonArrayReq = new JsonObjectRequest(Request.Method.POST, URL, jsonobj,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            Log.d("JSON", response.toString());
+                            JSONArray result = new JSONArray();
+                            try {
+                            //    ResponseList Response = Gson.fromJson(response.getJSONObject("responseList"), ResponseList.class);
+                                JSONArray rspone  = response.getJSONArray("responseList");
+                                rspone.getJSONObject(1).getString("outString");
+                                Log.d("response", rspone.getJSONObject(1).getString("outString"));
+                            }
+                            catch (JSONException e)
+                            {
+                                e.printStackTrace();
+                            }
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+
+                        }
+                    }) {
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String, String> params = new HashMap<String, String>();
+                    params.put("data", "Swaagat hai aapka");
+                    return params;
+                }
+
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+
+                    Map<String, String> header = new HashMap<String, String>();
+                    header.put("rev-api-key", "3777e0e714e8e7d937537a126ef49df7");
+                    header.put("rev-app-id", "hdelite_merchant");
+                    header.put("content-type", "application/json");
+                    header.put("cache-control", "no-cache");
+
+                    return header;
+
+                }
+
+            };
+
+            AppSingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonArrayReq, REQUEST_TAG);
+        }
+        catch (JSONException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
 
     public void volleyStringRequst(String url){
 
@@ -91,28 +170,13 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(String response) {
                 Log.d(TAG, response.toString());
 
-                LayoutInflater li = LayoutInflater.from(MainActivity.this);
-                showDialogView = li.inflate(R.layout.showdialog, null);
-                outputTextView = (TextView)showDialogView.findViewById(R.id.text_view_dialog);
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-                alertDialogBuilder.setView(showDialogView);
-                alertDialogBuilder
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                            }
-                        })
-                        .setCancelable(false)
-                        .create();
-                outputTextView.setText(response.toString());
-                alertDialogBuilder.show();
-                progressDialog.hide();
+
             }
         }, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {
                 VolleyLog.d(TAG, "Error: " + error.getMessage());
-                progressDialog.hide();
             }
         });
         // Adding String request to request queue
