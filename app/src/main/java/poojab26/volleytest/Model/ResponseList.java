@@ -1,8 +1,5 @@
-package poojab26.volleytest.Model;
 
-/**
- * Created by pblead26 on 15-May-17.
- */
+package poojab26.volleytest.Model;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -17,6 +14,9 @@ public class ResponseList {
     @SerializedName("outString")
     @Expose
     private List<String> outString = null;
+    @SerializedName("api_status")
+    @Expose
+    private int apiStatus;
 
     public String getInString() {
         return inString;
@@ -34,5 +34,12 @@ public class ResponseList {
         this.outString = outString;
     }
 
+    public int getApiStatus() {
+        return apiStatus;
+    }
+
+    public void setApiStatus(int apiStatus) {
+        this.apiStatus = apiStatus;
+    }
 
 }

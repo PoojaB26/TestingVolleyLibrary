@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -22,6 +23,7 @@ import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,7 +31,12 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import poojab26.volleytest.Model.Reverie;
+
+import static android.os.Build.ID;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView outputTextView;
     private ImageView outputImageView;
     private String sourceLang, targetLang;
+    private EditText etWord;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         JsonArrayRequestButton = (Button)findViewById(R.id.button_get_Json_array);
         ImageRequestButton = (Button)findViewById(R.id.button_get_image);
         TranslateButton = (Button)findViewById(R.id.button_translate);
+        etWord = (EditText)findViewById(R.id.etWord);
 
 
         stringRequestButton.setOnClickListener(new View.OnClickListener() {
@@ -89,19 +98,21 @@ public class MainActivity extends AppCompatActivity {
         TranslateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                volleyTranslateString();
+                String word = etWord.getText().toString();
+                volleyTranslateString(word);
             }
         });
 
     }
 
-    public void volleyTranslateString() {
+    public void volleyTranslateString(String word) {
         String REQUEST_TAG = "tag";
         sourceLang = "hindi";
         targetLang = "english";
         String URL = "https://api-gw.revup.reverieinc.com/apiman-gateway/highway_delite/transliteration/1.0?source_lang="+sourceLang+"&target_lang="+targetLang+"&domain=1";
-
-        final String jsonString = "{ \"data\": [ \"टेस्ट\",          \"स्वागत है आपका!\"] }";
+        Log.d(TAG, "word : "+ word);
+        final String jsonString = "{ \"data\": [ \""+ word + "\"] }";
+        Log.d(TAG, "json String"+jsonString);
         try {
             JSONObject jsonobj = new JSONObject(jsonString);
             JsonObjectRequest jsonArrayReq = new JsonObjectRequest(Request.Method.POST, URL, jsonobj,
@@ -109,12 +120,14 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onResponse(JSONObject response) {
                             Log.d("JSON", response.toString());
-                            JSONArray result = new JSONArray();
+                            Gson gson = new Gson();
+
                             try {
-                            //    ResponseList Response = Gson.fromJson(response.getJSONObject("responseList"), ResponseList.class);
-                                JSONArray rspone  = response.getJSONArray("responseList");
-                                rspone.getJSONObject(1).getString("outString");
-                                Log.d("response", rspone.getJSONObject(1).getString("outString"));
+
+                                Reverie reverie = gson.fromJson(response.toString(), Reverie.class);
+                                List<String> outStringList = reverie.getResponseList().get(0).getOutString();
+                                Log.d(TAG, outStringList.get(0));
+                                throw new JSONException("JSON Exception");
                             }
                             catch (JSONException e)
                             {
@@ -139,8 +152,8 @@ public class MainActivity extends AppCompatActivity {
                 public Map<String, String> getHeaders() throws AuthFailureError {
 
                     Map<String, String> header = new HashMap<String, String>();
-                    header.put("rev-api-key", "3777e0e714e8e7d937537a126ef49df7");
-                    header.put("rev-app-id", "hdelite_merchant");
+                    header.put("rev-api-key", your_key);
+                    header.put("rev-app-id", your_ID);
                     header.put("content-type", "application/json");
                     header.put("cache-control", "no-cache");
 
